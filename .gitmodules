@@ -1,9 +1,10 @@
-[submodule "wgpu-native"]
-	path = wgpu-native
-	url = https://github.com/gfx-rs/wgpu-native.git
 [submodule "glm"]
 	path = glm
 	url = https://github.com/g-truc/glm.git
 [submodule "glfw"]
 	path = glfw
 	url = https://github.com/glfw/glfw.git
+[submodule "WebGPU-distribution"]
+	path = WebGPU-distribution
+	url = https://github.com/eliemichel/WebGPU-distribution
+	branch = wgpu

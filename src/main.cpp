@@ -1,9 +1,8 @@
-#include <webgpu-headers/webgpu.h>
-#include <wgpu.h>
-
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
+
+#include <glm/glm.hpp>
 
 #include "utils.h"
 #include "wgpu_enviorment.h"
@@ -36,6 +35,7 @@ WGPUEnv::sInstance wgpu_instance = {};
 void main_render_loop() {
     while(!glfwWindowShouldClose(window)) {
         glfwPollEvents();
+        wgpu_instance.render_frame();
     }
     wgpu_instance.clean();
 }
@@ -45,13 +45,18 @@ int main() {
 
     if(!glfwInit()) {
         // Quit
+        std::cout << "NO!" << std::endl;
     }
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     window = glfwCreateWindow(640, 480, "WegBPU", NULL, NULL);
     
-    wgpu_instance.initialize(window, (void*) main_render_loop);
-    
+    wgpu_instance.initialize(window, NULL);
+
+    // Wait until all the async stuff has been done
+    while(!glfwWindowShouldClose(window) || !wgpu_instance.is_initialized) {};
+
+    main_render_loop();
 
     glfwDestroyWindow(window);
     glfwTerminate();
