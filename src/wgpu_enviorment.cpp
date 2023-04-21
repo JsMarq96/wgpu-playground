@@ -74,28 +74,7 @@ void WGPUEnv::sInstance::initialize(GLFWwindow *window, void *callback) {
     }
 }
 
- void WGPUEnv::sInstance::_config_with_device() {
-    // Create the Device Queue
-    {
-        device_queue = wgpuDeviceGetQueue(device);
-    }
 
-    // Create Swapchain
-    {
-        WGPUSwapChainDescriptor swapchain_descr = {
-            .nextInChain = NULL,
-            .usage = WGPUTextureUsage_RenderAttachment,
-            .format = wgpuSurfaceGetPreferredFormat(surface, adapter),
-            .width = 640,
-            .height = 480,
-            .presentMode = WGPUPresentMode_Fifo
-        };
-
-        swapchain = wgpuDeviceCreateSwapChain(device, surface, &swapchain_descr);
-    }
-
-    is_initialized = true;
- }
 
 void WGPUEnv::sInstance::clean() {
     wgpuInstanceRelease(instance);
@@ -109,7 +88,7 @@ void WGPUEnv::sInstance::render_frame() {
     // Get the current texture in the swapchain
     {
         current_texture_view = wgpuSwapChainGetCurrentTextureView(swapchain);
-        assert_msg(!current_texture_view, "Error, dont resize the window please!!");
+        assert_msg(current_texture_view != NULL, "Error, dont resize the window please!!");
     }
 
     // Create the command encoder
@@ -159,17 +138,21 @@ void  WGPUEnv::sInstance::e_adapter_request_ended(WGPURequestAdapterStatus statu
                                                   WGPUAdapter adapter, 
                                                   char const* message, 
                                                   void* user_data) {
-    assert_msg(status != WGPURequestAdapterStatus_Success, "Error loading adapter");
+    assert_msg(status == WGPURequestAdapterStatus_Success, "Error loading adapter");
     ((sPayload*) user_data)->wgpu_man_instance->adapter = adapter;
     
     // Inspect adapter features
     uint32_t function_count = wgpuAdapterEnumerateFeatures(adapter, NULL);
 
     WGPUFeatureName* features = (WGPUFeatureName*) malloc(sizeof(WGPUFeatureName) * function_count);
+
+    wgpuAdapterEnumerateFeatures(adapter, features);
     
+    std::cout << "Features" << std::endl;
     for(uint32_t i = 0; i < function_count; i++) {
         std::cout << features[i] << std::endl;
     }
+    std::cout << "======" << std::endl;
 
     WGPUDeviceDescriptor descriptor = {
         .nextInChain = NULL,
@@ -190,11 +173,33 @@ void WGPUEnv::sInstance::e_device_request_ended(WGPURequestDeviceStatus status,
                                                 char const * message, 
                                                 void *user_data) {
     //
+    WGPUEnv::sInstance *instace = ((sPayload*) user_data)->wgpu_man_instance;
     assert_msg(status == WGPURequestDeviceStatus_Success, "Error loading the device");
-    ((sPayload*) user_data)->wgpu_man_instance->device = device;
+    instace->device = device;
 
     // Set the error callback
     wgpuDeviceSetUncapturedErrorCallback(device, e_device_error, NULL);
+
+    // Create the Device Queue
+    {
+        instace->device_queue = wgpuDeviceGetQueue(device);
+    }
+
+    // Create Swapchain
+    {
+        WGPUSwapChainDescriptor swapchain_descr = {
+            .nextInChain = NULL,
+            .usage = WGPUTextureUsage_RenderAttachment,
+            .format = wgpuSurfaceGetPreferredFormat(instace->surface, instace->adapter),
+            .width = 640,
+            .height = 480,
+            .presentMode = WGPUPresentMode_Fifo
+        };
+
+        instace->swapchain = wgpuDeviceCreateSwapChain(device, instace->surface, &swapchain_descr);
+    }
+
+    instace->is_initialized = true;
 }
 
 void WGPUEnv::sInstance::e_device_error(WGPUErrorType type, char const* message, void* user_data) {

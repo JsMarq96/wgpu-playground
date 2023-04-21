@@ -41,8 +41,6 @@ void main_render_loop() {
 }
 
 int main() {
-    std::cout << "Hello" << std::endl;
-
     if(!glfwInit()) {
         // Quit
         std::cout << "NO!" << std::endl;
@@ -54,8 +52,8 @@ int main() {
     wgpu_instance.initialize(window, NULL);
 
     // Wait until all the async stuff has been done
-    while(!glfwWindowShouldClose(window) || !wgpu_instance.is_initialized) {};
-
+    while(!glfwWindowShouldClose(window) && !wgpu_instance.is_initialized) {};
+    std::cout << "Finished config" << std::endl;
     main_render_loop();
 
     glfwDestroyWindow(window);
