@@ -122,12 +122,23 @@ void WGPUEnv::sInstance::render_frame() {
         render_pass = wgpuCommandEncoderBeginRenderPass(device_command_encoder, &render_pass_descr);
         // nothing yet
         wgpuRenderPassEncoderEnd(render_pass);
+
+        wgpuTextureViewDrop(current_texture_view);
     }
-   
+
+    //
+    {
+        WGPUCommandBufferDescriptor cmd_buff_descriptor = {
+            .nextInChain = NULL,
+            .label = "Command buffer"
+        };
+
+        WGPUCommandBuffer commander = wgpuCommandEncoderFinish(device_command_encoder, &cmd_buff_descriptor);
+        wgpuQueueSubmit(device_queue, 1, &commander);
+    }
 
     // Submit frame
     {
-        wgpuTextureViewDrop(current_texture_view);
         wgpuSwapChainPresent(swapchain);
     }
 }
