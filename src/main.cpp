@@ -33,6 +33,7 @@ GLFWwindow* window = NULL;
 WGPUEnv::sInstance wgpu_instance = {};
 
 void main_render_loop() {
+    wgpu_instance._config_render_pipeline();
     while(!glfwWindowShouldClose(window)) {
         glfwPollEvents();
         wgpu_instance.render_frame();

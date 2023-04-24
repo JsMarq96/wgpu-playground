@@ -23,6 +23,7 @@ namespace WGPUEnv {
         WGPUSwapChain           swapchain;
         WGPUShaderModule        shader_module;
         WGPURenderPipeline      render_pipeline;
+        WGPUPipelineLayout      render_pipeline_layout;
 
         bool                    is_initialized = false;
         WGPUTextureView         current_texture_view;

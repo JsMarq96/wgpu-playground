@@ -79,7 +79,20 @@ void WGPUEnv::sInstance::initialize(GLFWwindow *window, void *callback) {
 void WGPUEnv::sInstance::_config_render_pipeline() {
     // Load the shader module https://eliemichel.github.io/LearnWebGPU/basic-3d-rendering/hello-triangle.html
     {
+        WGPUShaderModuleWGSLDescriptor shader_code_desc = {
+            .chain = {
+                .next = NULL,
+                .sType = WGPUSType_ShaderModuleWGSLDescriptor
+            },
+            .code = RAW_SHADERS::simple_shaders
+        };
+        WGPUShaderModuleDescriptor shader_descr = {
+            .nextInChain = &shader_code_desc.chain,
+            .hintCount = 0,
+            .hints = NULL,
+        };
 
+        shader_module = wgpuDeviceCreateShaderModule(device, &shader_descr);
     }
 
     // Config the render target
@@ -106,10 +119,21 @@ void WGPUEnv::sInstance::_config_render_pipeline() {
         };
     }
 
+    // Layout descriptor (bind goups, buffers, uniforms)
+    {
+        WGPUPipelineLayoutDescriptor layout_descr = {
+            .nextInChain = NULL,
+            .bindGroupLayoutCount = 0,
+            .bindGroupLayouts = NULL,
+        };
+
+        render_pipeline_layout = wgpuDeviceCreatePipelineLayout(device, &layout_descr);
+    }
+
     // Config the render pipeline
     {   
         WGPUFragmentState fragment_state = {
-            .module = NULL, // TODO
+            .module = shader_module,
             .entryPoint = "fs_main",
             .constantCount = 0,
             .constants = NULL,
@@ -119,8 +143,9 @@ void WGPUEnv::sInstance::_config_render_pipeline() {
 
         WGPURenderPipelineDescriptor pipeline_descr = {
             .nextInChain = NULL,
+            .layout = render_pipeline_layout,
             .vertex = {
-                .module = NULL, // TODO
+                .module = shader_module,
                 .entryPoint = "vs_main",
                 .constantCount = 0,
                 .constants = NULL,
@@ -190,7 +215,12 @@ void WGPUEnv::sInstance::render_frame() {
             .timestampWrites = NULL
         };
         render_pass = wgpuCommandEncoderBeginRenderPass(device_command_encoder, &render_pass_descr);
-        // nothing yet
+        {
+            // Bind Pipeline
+            wgpuRenderPassEncoderSetPipeline(render_pass, render_pipeline);
+            // Submit drawcall
+            wgpuRenderPassEncoderDraw(render_pass, 3, 1, 0, 0);
+        }
         wgpuRenderPassEncoderEnd(render_pass);
 
         wgpuTextureViewDrop(current_texture_view);
