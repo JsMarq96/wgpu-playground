@@ -2,6 +2,8 @@
 #include "webgpu.h"
 #include "wgpu.h"
 
+#include "raw_shaders.h"
+
 #include <GLFW/glfw3.h>
 #include <stdint.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
@@ -74,7 +76,75 @@ void WGPUEnv::sInstance::initialize(GLFWwindow *window, void *callback) {
     }
 }
 
+void WGPUEnv::sInstance::_config_render_pipeline() {
+    // Load the shader module https://eliemichel.github.io/LearnWebGPU/basic-3d-rendering/hello-triangle.html
+    {
 
+    }
+
+    // Config the render target
+    WGPUColorTargetState color_target;
+    WGPUBlendState blend_state;
+    {
+        blend_state = {
+            .color = {
+                .operation = WGPUBlendOperation_Add,
+                .srcFactor = WGPUBlendFactor_SrcAlpha,
+                .dstFactor = WGPUBlendFactor_OneMinusSrcAlpha,
+            },
+            .alpha = {
+                .operation = WGPUBlendOperation_Add,
+                .srcFactor = WGPUBlendFactor_Zero,
+                .dstFactor = WGPUBlendFactor_One,
+            }
+        };
+
+        color_target = {
+            .format = swapchain_format,
+            .blend = &blend_state,
+            .writeMask = WGPUColorWriteMask_All
+        };
+    }
+
+    // Config the render pipeline
+    {   
+        WGPUFragmentState fragment_state = {
+            .module = NULL, // TODO
+            .entryPoint = "fs_main",
+            .constantCount = 0,
+            .constants = NULL,
+            .targetCount = 1,
+            .targets = &color_target
+        };
+
+        WGPURenderPipelineDescriptor pipeline_descr = {
+            .nextInChain = NULL,
+            .vertex = {
+                .module = NULL, // TODO
+                .entryPoint = "vs_main",
+                .constantCount = 0,
+                .constants = NULL,
+                .bufferCount = 0,
+                .buffers = NULL,
+                
+            },
+            .primitive = {
+                .topology = WGPUPrimitiveTopology_TriangleList,
+                .stripIndexFormat = WGPUIndexFormat_Undefined, // order of the connected vertices
+                .frontFace = WGPUFrontFace_CCW,
+                .cullMode = WGPUCullMode_None
+            },
+            .depthStencil = NULL,
+            .multisample = {
+                .count = 1,
+                .mask = ~0u,
+                .alphaToCoverageEnabled = false
+            },
+            .fragment = &fragment_state,
+        };
+        render_pipeline = wgpuDeviceCreateRenderPipeline(device, &pipeline_descr);
+    }
+}
 
 void WGPUEnv::sInstance::clean() {
     wgpuInstanceRelease(instance);
@@ -198,10 +268,11 @@ void WGPUEnv::sInstance::e_device_request_ended(WGPURequestDeviceStatus status,
 
     // Create Swapchain
     {
+        instace->swapchain_format = wgpuSurfaceGetPreferredFormat(instace->surface, instace->adapter);
         WGPUSwapChainDescriptor swapchain_descr = {
             .nextInChain = NULL,
             .usage = WGPUTextureUsage_RenderAttachment,
-            .format = wgpuSurfaceGetPreferredFormat(instace->surface, instace->adapter),
+            .format = instace->swapchain_format,
             .width = 640,
             .height = 480,
             .presentMode = WGPUPresentMode_Fifo

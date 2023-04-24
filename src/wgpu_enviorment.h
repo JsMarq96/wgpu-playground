@@ -19,7 +19,10 @@ namespace WGPUEnv {
         WGPUDevice              device;
         WGPUQueue               device_queue;
         WGPUCommandEncoder      device_command_encoder;
+        WGPUTextureFormat       swapchain_format;
         WGPUSwapChain           swapchain;
+        WGPUShaderModule        shader_module;
+        WGPURenderPipeline      render_pipeline;
 
         bool                    is_initialized = false;
         WGPUTextureView         current_texture_view;
@@ -31,6 +34,8 @@ namespace WGPUEnv {
         void render_frame();
 
         void _config_with_device();
+
+        void _config_render_pipeline();
         
         // Events =========================
         static void e_device_error(WGPUErrorType type, char const* message, void* user_data);
