@@ -1,5 +1,3 @@
 build/
 .cache/
 WebGPU/bin/
-WebGPU/include/
-WebGPU/
